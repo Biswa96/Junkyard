@@ -1,0 +1,13 @@
+# Folders
+.vs/
+.vscode/
+bin/
+obj/
+out/
+
+# Files
+*.exe
+*.o
+*.obj
+*.out
+*.user
