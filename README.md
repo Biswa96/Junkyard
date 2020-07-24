@@ -12,6 +12,14 @@ Just for fun. Recipe to destroy your PC in one minute.
 
 [llvm-mingw]: https://github.com/mstorsjo/llvm-mingw.git
 
+* TypeLibrary: Generates type library files (.til) for Hex Rays Decompiler
+using Type Information Library Utility provided in IDA Pro SDK.
+
+  - ntddk.bat: generates ntddk.til
+  - ntifs.bat: generates ntifs.til
+  - wdm.bat: generates wdm.til
+  - windows.bat: generates windows.til
+  - winnt.bat: generates winnt.til
 
 ## License
 
