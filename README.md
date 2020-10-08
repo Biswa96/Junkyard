@@ -7,6 +7,7 @@ Just for fun. Recipe to destroy your PC in one minute.
 * c: C files
   - KillDwm: Terminate DWM process by suspending WinLogon process.
   - MiniProcList: List all minimal processes based on handle count.
+  - SetFileTime: Set all timestamp of a file to 1 Jan 1601.
 
 * sh: shell scripts
   - Build_LLVM_Mingw_AArch64: Build [llvm-mingw] for Windows 10 AArch64 only.
