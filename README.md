@@ -9,6 +9,9 @@ Just for fun. Recipe to destroy your PC in one minute.
   - MiniProcList: List all minimal processes based on handle count.
   - SetFileTime: Set all timestamp of a file to 1 Jan 1601.
 
+* doc: How-to do something
+  - [Windows PE AArch64 in Qemu](doc/WinPE_AArch64_Qemu.md)
+
 * sh: shell scripts
   - Build_LLVM_Mingw_AArch64: Build [llvm-mingw] for Windows 10 AArch64 only.
 
