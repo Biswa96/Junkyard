@@ -18,25 +18,64 @@
 #pragma comment (lib, "ntdll.lib")
 #endif
 
-NTSTATUS NTAPI NtSetInformationFile(
-    HANDLE FileHandle,
-    PIO_STATUS_BLOCK IoStatusBlock,
-    PVOID FileInformation,
-    ULONG Length,
-    FILE_INFORMATION_CLASS FileInformationClass);
+NTSYSCALLAPI
+NTSTATUS
+NTAPI
+NtQueryInformationFile(
+    _In_ HANDLE FileHandle,
+    _Out_ PIO_STATUS_BLOCK IoStatusBlock,
+    _Out_writes_bytes_(Length) PVOID FileInformation,
+    _In_ ULONG Length,
+    _In_ FILE_INFORMATION_CLASS FileInformationClass
+    );
 
-NTSTATUS SetTimeIndividual(PWSTR FileName)
+NTSYSCALLAPI
+NTSTATUS
+NTAPI
+NtSetInformationFile(
+    _In_ HANDLE FileHandle,
+    _Out_ PIO_STATUS_BLOCK IoStatusBlock,
+    _In_reads_bytes_(Length) PVOID FileInformation,
+    _In_ ULONG Length,
+    _In_ FILE_INFORMATION_CLASS FileInformationClass
+    );
+
+NTSTATUS SetTimeIndividual(PWSTR ToRead, PWSTR ToWrite)
 {
+    HANDLE hFile;
+    NTSTATUS Status;
     IO_STATUS_BLOCK IoStatusBlock;
     FILE_BASIC_INFORMATION FileInfo = { 0 };
-    FileInfo.CreationTime.LowPart = FileInfo.CreationTime.HighPart = 1;
-    FileInfo.LastAccessTime.LowPart = FileInfo.LastAccessTime.HighPart = 1;
-    FileInfo.LastWriteTime.LowPart = FileInfo.LastWriteTime.HighPart = 1;
-    FileInfo.ChangeTime.LowPart = FileInfo.ChangeTime.HighPart = 1;
-    FileInfo.FileAttributes = FILE_ATTRIBUTE_NORMAL;
 
-    HANDLE hFile = CreateFileW(
-        FileName,
+    if (ToRead && *ToRead)
+    {
+        hFile = CreateFileW(
+            ToRead,
+            FILE_READ_ATTRIBUTES,
+            FILE_SHARE_READ | FILE_SHARE_WRITE,
+            NULL,
+            OPEN_EXISTING,
+            FILE_FLAG_BACKUP_SEMANTICS,
+            NULL);
+
+        Status = NtQueryInformationFile(
+            hFile,
+            &IoStatusBlock,
+            &FileInfo, sizeof FileInfo, 4); /* FileBasicInformation */
+
+        CloseHandle(hFile);
+    }
+    else
+    {
+        FileInfo.CreationTime.LowPart = FileInfo.CreationTime.HighPart = 1;
+        FileInfo.LastAccessTime.LowPart = FileInfo.LastAccessTime.HighPart = 1;
+        FileInfo.LastWriteTime.LowPart = FileInfo.LastWriteTime.HighPart = 1;
+        FileInfo.ChangeTime.LowPart = FileInfo.ChangeTime.HighPart = 1;
+        FileInfo.FileAttributes = FILE_ATTRIBUTE_NORMAL;
+    }
+
+    hFile = CreateFileW(
+        ToWrite,
         FILE_WRITE_ATTRIBUTES,
         FILE_SHARE_READ | FILE_SHARE_WRITE,
         NULL,
@@ -44,12 +83,12 @@ NTSTATUS SetTimeIndividual(PWSTR FileName)
         FILE_FLAG_BACKUP_SEMANTICS,
         NULL);
 
-    NTSTATUS Status = NtSetInformationFile(
+    Status = NtSetInformationFile(
         hFile,
         &IoStatusBlock,
-        &FileInfo, sizeof FileInfo, 4); /*FileBasicInformation */
+        &FileInfo, sizeof FileInfo, 4); /* FileBasicInformation */
 
-    Status = NtClose(hFile);
+    CloseHandle(hFile);
     return Status;
 }
 
@@ -76,12 +115,12 @@ void WINAPI SetTimeRecursive(PWSTR FdPath)
                 wcscat(Path, fileInfo.cFileName);
                 if (fileInfo.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
                 {   // Folder
-                    SetTimeIndividual(Path);
+                    SetTimeIndividual(NULL, Path);
                     SetTimeRecursive(Path);
                 }
                 else
                 {   // File
-                    SetTimeIndividual(Path);
+                    SetTimeIndividual(NULL, Path);
                 }
             }
         } while (FindNextFileW(hFile, &fileInfo));
@@ -97,11 +136,20 @@ int WINAPI main(void)
 
     if (wargc < 2)
     {
-        printf("No path specified\n");
+        wprintf(L"No path specified\n");
         return 0;
     }
 
-    SetTimeIndividual(wargv[1]);
+    if (wargc == 3)
+    {
+        wprintf(L"Read from: %ls\n", wargv[1]);
+        wprintf(L"Write to: %ls\n", wargv[2]);
+
+        SetTimeIndividual(wargv[1], wargv[2]);
+        return 0;
+    }
+
+    SetTimeIndividual(NULL, wargv[1]);
     SetTimeRecursive(wargv[1]);
     return 0;
 }
