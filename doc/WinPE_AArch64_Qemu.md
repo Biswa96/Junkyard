@@ -64,43 +64,52 @@ dism /Mount-Image /ImageFile:C:\WinPE\WinPE_arm64\media\sources\boot.wim /Index:
 ```
 
 4. Extract all the ARM64 drivers from the previously downloaded VirtIO ISO file
-in `C:\WinPE\arm64` folder. Install the drivers in that mounted WinPE.
+in `C:\WinPE\drivers` folder. Assume the VirtIO ISO is mounted as `G:\` drive.
 
 ```
-dism /Image:C:\WinPE\mount /Add-Driver /Driver:C:\WinPE\arm64 /Recurse
+mkdir C:\WinPE\drivers
+pushd G:\
+for /f %x in ('dir /s /b "ARM64" ^| find /i "w10"') do xcopy /e %x C:\WinPE\drivers
+popd
 ```
 
-5. Unmount the modified WinPE image.
+5. Install the drivers in that mounted WinPE.
+
+```
+dism /Image:C:\WinPE\mount /Add-Driver /Driver:C:\WinPE\drivers /Recurse /ForceUnsigned
+```
+
+6. Unmount the modified WinPE image.
 
 ```
 dism /Unmount-Image /MountDir:C:\WinPE\mount /Commit
 ```
 
-6. Apply the WinPE image to the mounted VHD file.
+7. Apply the WinPE image to the mounted VHD file.
 
 ```
 dism /Apply-Image /ImageFile:C:\WinPE\WinPE_arm64\media\sources\boot.wim /Index:1 /ApplyDir:X:\
 ```
 
-7. Install EFI files to the EFI partition of mounted VHD file.
+8. Install EFI files to the EFI partition of mounted VHD file.
 
 ```
 bcdboot X:\Windows /s Y: /f UEFI
 ```
 
-8. Detach the mounted VHD file.
+9. Detach the mounted VHD file.
 
-```
+```cmd
 diskpart
 select vdisk file=C:\WinPE\WinPE.vhd
 detach vdisk
 exit
 ```
 
-9. Extract QEMU_CODE.fd and QEMU_VARS.fd files from previously downloaded UEFI
+10. Extract QEMU_CODE.fd and QEMU_VARS.fd files from previously downloaded UEFI
 firmware package.
 
-10. Run Qemu in C:\WinPE folder. I am using Qemu package from MSYS2/mingw-w64.
+11. Run Qemu in C:\WinPE folder. I am using Qemu package from MSYS2/mingw-w64.
 The command should not depend on the host OS. The commands allocates 2 CPU cores
 and 1 GB memory.
 
@@ -119,7 +128,8 @@ qemu-system-aarch64 \
 -drive file=QEMU_CODE.fd,format=raw,if=pflash,index=0,readonly=on \
 -drive file=QEMU_VARS.fd,format=raw,if=pflash,index=1 \
 -device virtio-blk,drive=system \
--drive if=none,id=system,format=vpc,file=WinPE.vhd
+-drive if=none,id=system,format=vpc,file=WinPE.vhd \
+-net nic,model=virtio -net user
 ```
 
 If there is no output reboot the VM and press ESC to select correct boot order.
