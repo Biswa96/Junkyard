@@ -79,6 +79,13 @@ popd
 dism /Image:C:\WinPE\mount /Add-Driver /Driver:C:\WinPE\drivers /Recurse /ForceUnsigned
 ```
 
+6. Install any optional component
+
+```
+dism /Image:C:\WinPE\mount /Add-Package /PackagePath:"C:\Program Files (x86)\Windows Kits\10\Assessment and Deployment Kit\Windows Preinstallation Environment\arm64\WinPE_OCs\WinPE-RNDIS.cab"
+dism /Image:C:\WinPE\mount /Add-Package /PackagePath:"C:\Program Files (x86)\Windows Kits\10\Assessment and Deployment Kit\Windows Preinstallation Environment\arm64\WinPE_OCs\en-us\WinPE-RNDIS_en-us.cab"
+```
+
 6. Unmount the modified WinPE image.
 
 ```
@@ -129,7 +136,8 @@ qemu-system-aarch64 \
 -drive file=QEMU_VARS.fd,format=raw,if=pflash,index=1 \
 -device virtio-blk,drive=system \
 -drive if=none,id=system,format=vpc,file=WinPE.vhd \
--net nic,model=virtio -net user
+-net nic,model=virtio -net user \
+-net user,hostfwd=tcp::2222-:22,hostfwd=tcp::3389-:3389
 ```
 
 If there is no output reboot the VM and press ESC to select correct boot order.
